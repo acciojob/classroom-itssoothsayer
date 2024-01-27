@@ -1,8 +1,10 @@
 package com.driver;
 
+import org.springframework.stereotype.Repository;
+
 import java.util.HashMap;
 import java.util.Map;
-
+@Repository
 public class StudentRepository {
 
     private final Map<String, Student> students = new HashMap<>();
