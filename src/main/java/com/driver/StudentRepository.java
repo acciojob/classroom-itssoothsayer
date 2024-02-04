@@ -1,59 +1,68 @@
 package com.driver;
 
-import org.springframework.stereotype.Repository;
+import java.util.*;
 
-import java.util.HashMap;
-import java.util.Map;
-@Repository
 public class StudentRepository {
-
-    private final Map<String, Student> students = new HashMap<>();
-    private final Map<String, Teacher> teachers = new HashMap<>();
-    private final Map<String, String> studentTeacherPairs = new HashMap<>();
-
-    public void addStudent(Student student) {
-        students.put(student.getName(), student);
+    private Map<String, Student> studentData=new HashMap<>();
+    private Map<String, Teacher> teacherData=new HashMap<>();
+    private Map<String, ArrayList<String>> teacherStudentsMap = new HashMap<>();
+    public void add(Student student) {
+        studentData.put(student.getName(), student);
     }
-
-    public void addTeacher(Teacher teacher) {
-        teachers.put(teacher.getName(), teacher);
+    public void adding(Teacher teacher){
+        teacherData.put(teacher.getName(), teacher);
     }
-
-    public void addStudentTeacherPair(String studentName, String teacherName) {
-        studentTeacherPairs.put(studentName, teacherName);
+    public void add(String student, String teacher) {
+        //add student to list for a particular teacher
+        ArrayList<String> students = teacherStudentsMap.getOrDefault(teacher, new ArrayList<String>());
+        students.add(student);
+        teacherStudentsMap.put(teacher, students);
     }
-
-    public Student getStudentByName(String name) {
-        return students.get(name);
-    }
-
-    public Teacher getTeacherByName(String name) {
-        return teachers.get(name);
-    }
-
-    public Map<String, String> getStudentsByTeacherName(String teacherName) {
-        Map<String, String> result = new HashMap<>();
-        for (Map.Entry<String, String> entry : studentTeacherPairs.entrySet()) {
-            if (entry.getValue().equals(teacherName)) {
-                result.put(entry.getKey(), teacherName);
-            }
+    public Optional<Student> getStudent(String student) {
+        if(studentData.containsKey(student)){
+            return Optional.of(studentData.get(student));
         }
-        return result;
+        return Optional.empty();
+    }
+    public Teacher getTeacherByName(String name) {
+        if(teacherData.containsKey(name)) {
+            return teacherData.get(name);
+        }
+        return null;
+    }
+    public Optional<Teacher> getTeacher(String teacher) {
+        if(teacherData.containsKey(teacher)){
+            return Optional.of(teacherData.get(teacher));
+        }
+        return Optional.empty();
     }
 
-    public Map<String, Student> getAllStudents() {
-        return students;
+    public List<String> getAllStudents() {
+        return new ArrayList<>(studentData.keySet());
     }
 
-    public void deleteTeacherByName(String teacherName) {
-        teachers.remove(teacherName);
-        // Also remove students taught by this teacher
-        studentTeacherPairs.entrySet().removeIf(entry -> entry.getValue().equals(teacherName));
+    public List<String> getAllStudentForTeacher(String teacher) {
+        return teacherStudentsMap.get(teacher);
     }
 
     public void deleteAllTeachers() {
-        teachers.clear();
-        // Also remove all student-teacher pairs
-        studentTeacherPairs.clear();
+
+    }
+
+    public List<String> getStudentsByTeacher(String teacher) {
+        return teacherStudentsMap.getOrDefault(teacher, new ArrayList<>());
+    }
+
+    public void deleteStudent(String student) {
+        studentData.remove(student);
+    }
+
+    public void deleteTeacher(String teacher) {
+        teacherData.remove(teacher);
+        teacherStudentsMap.remove(teacher);
+    }
+
+    public List<String> getAllTeachers() {
+        return new ArrayList<>(teacherData.keySet());
     }
 }

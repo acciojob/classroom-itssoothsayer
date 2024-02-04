@@ -1,64 +1,68 @@
 package com.driver;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
-@Service
 public class StudentService {
 
-    @Autowired
-    private StudentRepository studentRepository;
-
-    public ResponseEntity<String> addStudent(Student student) {
-        studentRepository.addStudent(student);
-        return new ResponseEntity<>("New student added successfully", HttpStatus.CREATED);
+    private StudentRepository studentRepository=new StudentRepository();
+    public void addStudent(Student student) {
+        studentRepository.add(student);
     }
 
-    public ResponseEntity<String> addTeacher(Teacher teacher) {
-        studentRepository.addTeacher(teacher);
-        return new ResponseEntity<>("New teacher added successfully", HttpStatus.CREATED);
+    public void addTeacher(Teacher teacher) {
+        studentRepository.adding(teacher);
     }
 
-    public ResponseEntity<String> addStudentTeacherPair(String studentName, String teacherName) {
-        studentRepository.addStudentTeacherPair(studentName, teacherName);
-        return new ResponseEntity<>("New student-teacher pair added successfully", HttpStatus.CREATED);
+    public void addStudentTeacherPair(String student, String teacher) {
+        Optional<Student> studentOpt = studentRepository.getStudent(student);
+        Optional<Teacher> teacherOpt = studentRepository.getTeacher(teacher);
+        if(studentOpt.isEmpty()) {
+            throw new RuntimeException(student);
+        }
+        if(teacherOpt.isEmpty()) {
+            throw new RuntimeException();
+        }
+
+        Teacher teacherObj = teacherOpt.get();
+        teacherObj.setNumberOfStudents(teacherObj.getNumberOfStudents()+1);
+        studentRepository.adding(teacherObj);
+
+        studentRepository.add(student, teacher);
     }
 
-    public ResponseEntity<Student> getStudentByName(String name) {
-        Student student = studentRepository.getStudentByName(name);
-        return new ResponseEntity<>(student, HttpStatus.OK);
+    public List<String> getAllStudents() {
+        return studentRepository.getAllStudents();
     }
 
-    public ResponseEntity<Teacher> getTeacherByName(String name) {
-        Teacher teacher = studentRepository.getTeacherByName(name);
-        return new ResponseEntity<>(teacher, HttpStatus.OK);
+    public void deleteTeacher(String teacher) {
+        List<String> students = studentRepository.getAllStudentForTeacher(teacher);
+        studentRepository.deleteTeacher(teacher);
+        for(String student:students) {
+            studentRepository.deleteStudent(student);
+        }
     }
 
-    public ResponseEntity<List<String>> getStudentsByTeacherName(String teacherName) {
-        Map<String, String> studentTeacherPairs = studentRepository.getStudentsByTeacherName(teacherName);
-        List<String> students = studentTeacherPairs.keySet().stream().collect(Collectors.toList());
-        return new ResponseEntity<>(students, HttpStatus.OK);
+    public Student getStudent(String name) {
+        Optional<Student> studentOpt = studentRepository.getStudent(name);
+        if(studentOpt.isPresent()){
+            return studentOpt.get();
+        }
+        throw new RuntimeException(name);
     }
 
-    public ResponseEntity<List<String>> getAllStudents() {
-        Map<String, Student> students = studentRepository.getAllStudents();
-        List<String> studentNames = students.keySet().stream().collect(Collectors.toList());
-        return new ResponseEntity<>(studentNames, HttpStatus.OK);
+    public Teacher getTeacherByName(String name) {
+        return studentRepository.getTeacherByName(name);
     }
 
-    public ResponseEntity<String> deleteTeacherByName(String teacherName) {
-        studentRepository.deleteTeacherByName(teacherName);
-        return new ResponseEntity<>(teacherName + " removed successfully", HttpStatus.OK);
+    public List<String> getStudentsByTeacherName(String teacher) {
+        return studentRepository.getStudentsByTeacher(teacher);
     }
 
-    public ResponseEntity<String> deleteAllTeachers() {
-        studentRepository.deleteAllTeachers();
-        return new ResponseEntity<>("All teachers deleted successfully", HttpStatus.OK);
+    public void deleteAllTeachers() {
+        List<String> teachers = studentRepository.getAllTeachers();
+        for(String teacher: teachers) {
+            deleteTeacher(teacher);
+        }
     }
 }
