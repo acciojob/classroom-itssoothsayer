@@ -1,11 +1,17 @@
 package com.driver;
 
 import java.util.List;
+import java.util.Optional;
 
 public class StudentService {
-    StudentRepository studentRepository=new StudentRepository();
+
+
+    private StudentRepository studentRepository=new StudentRepository();
+
+
     public void addStudent(Student student) {
-        studentRepository.addStudent(student);
+        studentRepository.add(student);
+
     }
 
     public void addTeacher(Teacher teacher) {
@@ -13,30 +19,60 @@ public class StudentService {
     }
 
     public void addStudentTeacherPair(String student, String teacher) {
-        studentRepository.addStudentTeacherPair(student,teacher);
+        Optional<Student> studentOptional=studentRepository.getstudent(student);
+        Optional<Teacher> teacherOptional=studentRepository.getTeacher(teacher);
+        if(studentOptional.isEmpty()){
+            throw new RuntimeException("student not present in the database");
+        }
+        if(teacherOptional.isEmpty()){
+            throw new RuntimeException("teacher not present in the database");
+        }
+               Teacher teacherObj=teacherOptional.get();
+        teacherObj.setNumberOfStudents(teacherObj.getNumberOfStudents()+1);
+        studentRepository.addTeacher(teacherObj);
+            studentRepository.addStudentTeacherPair(student,teacher);
+
+
+
     }
 
-    public Student getStudentByName(String name) {
-        return studentRepository.getStudentByName(name);
+    public Student studentByName(String name) {
+       Optional<Student> studentsOpt= studentRepository.getstudent(name);
+       if(studentsOpt.isPresent()) {
+           return studentsOpt.get();
+       }
+       throw new RuntimeException("student not present");
     }
 
-    public Teacher getTeacherByName(String name) {
-        return studentRepository.getTeacherByName(name);
+    public Teacher teacherByName(String name) {
+        Optional<Teacher> teacherOpt= studentRepository.getTeacher(name);
+        if(teacherOpt.isPresent()) {
+            return teacherOpt.get();
+        }
+        throw new RuntimeException("student not present");
     }
 
-    public List<String> getStudentsByTeacherName(String teacher) {
-        return studentRepository.getStudentsByTeacherName(teacher);
+    public List<String> getStudentByTeacherName(String teacher) {
+        return studentRepository.getStudentByTeacherName(teacher);
     }
 
-    public List<String> getAllStudents() {
-        return studentRepository.getAllStudents();
+    public List<String> getAllStudent() {
+        return studentRepository.getAllStudent();
     }
 
     public void deleteTeacherByName(String teacher) {
-        studentRepository.deleteTeacherByName(teacher);
+        List<String> students=getStudentByTeacherName(teacher);
+        studentRepository.deleteTeacher(teacher);
+        for(String stud:students){
+            studentRepository.deleteStudent(stud);
+        }
+
     }
 
-    public void deleteAllTeachers() {
-        studentRepository.deleteAllTeachers();
+    public void deleteAllTeacher() {
+        List<String> teacher=studentRepository.getAllTeacher();
+        for(String tech:teacher){
+            deleteTeacherByName(tech);
+        }
     }
 }
